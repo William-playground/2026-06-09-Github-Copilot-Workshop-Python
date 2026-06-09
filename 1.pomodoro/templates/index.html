@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポモドーロタイマー</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <div class="window">
+            <!-- タイトルバー -->
+            <div class="titlebar">
+                <h1 class="titlebar-title">ポモドーロタイマー</h1>
+                <div class="titlebar-controls">
+                    <button class="titlebar-btn minimize">−</button>
+                    <button class="titlebar-btn maximize">□</button>
+                    <button class="titlebar-btn close">×</button>
+                </div>
+            </div>
+
+            <!-- ステータス表示 -->
+            <div class="status-label">
+                <span id="status-text">作業中</span>
+            </div>
+
+            <!-- 円形タイマー -->
+            <div class="timer-ring-container">
+                <svg class="timer-ring" viewBox="0 0 200 200">
+                    <!-- 背景リング -->
+                    <circle cx="100" cy="100" r="90" class="timer-ring-bg" />
+                    <!-- 進捗リング -->
+                    <circle cx="100" cy="100" r="90" class="timer-ring-progress" id="progress-ring" />
+                </svg>
+                <div class="timer-display">
+                    <span id="timer-text">25:00</span>
+                </div>
+            </div>
+
+            <!-- 操作ボタン -->
+            <div class="actions">
+                <button id="start-btn" class="btn btn-primary">開始</button>
+                <button id="reset-btn" class="btn btn-secondary">リセット</button>
+            </div>
+
+            <!-- 今日の進捗 -->
+            <div class="daily-summary">
+                <div class="summary-item">
+                    <div class="summary-value" id="completed-count">0</div>
+                    <div class="summary-label">完了</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="focus-hours">0時間0分</div>
+                    <div class="summary-label">集中時間</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript モジュール -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
