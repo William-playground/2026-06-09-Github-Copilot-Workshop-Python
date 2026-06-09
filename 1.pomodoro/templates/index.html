@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .timer-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+        }
+
+        svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .bg-circle {
+            fill: none;
+            stroke: #333;
+            stroke-width: 15;
+        }
+
+        .progress-circle {
+            fill: none;
+            stroke: #007bff; /* Start with Blue */
+            stroke-width: 15;
+            stroke-dasharray: 879.6; /* 2 * PI * 140 */
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear, stroke 1s linear;
+        }
+
+        .time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 30px;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .status {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="container">
+        <div class="status" id="status">Focus Time</div>
+        <div class="timer-wrapper">
+            <svg>
+                <circle class="bg-circle" cx="150" cy="150" r="140"></circle>
+                <circle class="progress-circle" id="progress" cx="150" cy="150" r="140"></circle>
+            </svg>
+            <div class="time-display" id="time">25:00</div>
+        </div>
+        <div class="controls">
+            <button id="start-btn">Start</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+    </div>
+
+    <!-- Particles.js library -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        const WORK_TIME = 25 * 60; // 25 minutes
+        const BREAK_TIME = 5 * 60; // 5 minutes
+
+        let timeLeft = WORK_TIME;
+        let totalTime = WORK_TIME;
+        let isWorking = true;
+        let isRunning = false;
+        let timerInterval;
+
+        const timeDisplay = document.getElementById('time');
+        const progressCircle = document.getElementById('progress');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusDisplay = document.getElementById('status');
+
+        const circumference = 2 * Math.PI * 140; // 879.6
+
+        // Initialize particles.js for focus effect
+        function initParticles() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: "#ffffff" },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.5, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+                    move: { enable: true, speed: 2, direction: "none", random: true, straight: false, out_mode: "out", bounce: false }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: { onhover: { enable: true, mode: "repulse" }, onclick: { enable: true, mode: "push" }, resize: true },
+                    modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+                },
+                retina_detect: true
+            });
+        }
+
+        initParticles();
+        
+        function setParticleSpeed(speed) {
+            if (window.pJSDom && window.pJSDom.length > 0) {
+                window.pJSDom[0].pJS.particles.move.speed = speed;
+            }
+        }
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // Update circular progress bar
+            const progress = timeLeft / totalTime;
+            const dashoffset = circumference * (1 - progress);
+            progressCircle.style.strokeDashoffset = dashoffset;
+
+            // Update color gradient (Blue -> Yellow -> Red)
+            if (isWorking) {
+                let r, g, b;
+                if (progress > 0.5) {
+                    // Blue to Yellow
+                    // Blue: 0, 123, 255
+                    // Yellow: 255, 210, 0
+                    const p = (progress - 0.5) * 2; // 1 (start) to 0 (middle)
+                    r = Math.floor(0 + (255 - 0) * (1 - p));
+                    g = Math.floor(123 + (210 - 123) * (1 - p));
+                    b = Math.floor(255 + (0 - 255) * (1 - p));
+                } else {
+                    // Yellow to Red
+                    // Yellow: 255, 210, 0
+                    // Red: 220, 53, 69
+                    const p = progress * 2; // 1 (middle) to 0 (end)
+                    r = Math.floor(220 + (255 - 220) * p);
+                    g = Math.floor(53 + (210 - 53) * p);
+                    b = Math.floor(69 + (0 - 69) * p);
+                }
+                progressCircle.style.stroke = `rgb(${r}, ${g}, ${b})`;
+                
+                // Increase particle speed as time goes down to simulate urgency/focus intensity
+                if (isRunning) {
+                    setParticleSpeed(2 + (1 - progress) * 5);
+                }
+            } else {
+                // Green for break
+                progressCircle.style.stroke = "#28a745";
+                if (isRunning) {
+                    setParticleSpeed(1); // Relaxed particles during break
+                }
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.textContent = 'Pause';
+            
+            if (isWorking) {
+                setParticleSpeed(2 + (1 - (timeLeft / totalTime)) * 5);
+                document.getElementById('particles-js').style.opacity = 1;
+            }
+
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    
+                    // Switch mode
+                    isWorking = !isWorking;
+                    timeLeft = isWorking ? WORK_TIME : BREAK_TIME;
+                    totalTime = timeLeft;
+                    statusDisplay.textContent = isWorking ? 'Focus Time' : 'Break Time';
+                    startBtn.textContent = 'Start';
+                    
+                    if (!isWorking) {
+                        document.getElementById('particles-js').style.opacity = 0.3; // dim particles during break
+                    } else {
+                        document.getElementById('particles-js').style.opacity = 1;
+                    }
+                    
+                    updateDisplay();
+                    
+                    // Optional: auto-start next phase
+                    // startTimer();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            startBtn.textContent = 'Start';
+            setParticleSpeed(0.5); // Slow down when paused
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isWorking = true;
+            timeLeft = WORK_TIME;
+            totalTime = WORK_TIME;
+            statusDisplay.textContent = 'Focus Time';
+            startBtn.textContent = 'Start';
+            document.getElementById('particles-js').style.opacity = 1;
+            setParticleSpeed(2);
+            updateDisplay();
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        });
+
+        resetBtn.addEventListener('click', resetTimer);
+
+        // Initial setup
+        updateDisplay();
+    </script>
+</body>
+</html>
