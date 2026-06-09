@@ -13,9 +13,9 @@
             <div class="titlebar">
                 <h1 class="titlebar-title">ポモドーロタイマー</h1>
                 <div class="titlebar-controls">
-                    <button class="titlebar-btn minimize">−</button>
-                    <button class="titlebar-btn maximize">□</button>
-                    <button class="titlebar-btn close">×</button>
+                    <button class="titlebar-btn minimize" aria-label="最小化">−</button>
+                    <button class="titlebar-btn maximize" aria-label="最大化">□</button>
+                    <button class="titlebar-btn close" aria-label="閉じる">×</button>
                 </div>
             </div>
 
@@ -56,6 +56,14 @@
             </div>
         </div>
     </div>
+
+    <!-- サーバー側の初期設定を JS へ渡すブリッジ -->
+    <script>
+        window.POMODORO_CONFIG = {
+            workMinutes: {{ work_minutes | tojson }},
+            breakMinutes: {{ break_minutes | tojson }},
+        };
+    </script>
 
     <!-- JavaScript モジュール -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>

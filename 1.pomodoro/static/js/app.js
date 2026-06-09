@@ -14,11 +14,16 @@ const completedCount = document.getElementById('completed-count');
 const focusHours = document.getElementById('focus-hours');
 const progressRing = document.getElementById('progress-ring');
 
+// サーバーから渡された初期設定（未定義の場合はデフォルト値を使用）
+const config = window.POMODORO_CONFIG || {};
+const workMinutes = Number(config.workMinutes) || 25;
+const workSeconds = workMinutes * 60;
+
 // アプリケーション状態の初期化
 const state = {
     mode: 'work',
-    durationSeconds: 25 * 60,
-    remainingSeconds: 25 * 60,
+    durationSeconds: workSeconds,
+    remainingSeconds: workSeconds,
     isRunning: false,
     completedCount: 0,
     focusSeconds: 0,
